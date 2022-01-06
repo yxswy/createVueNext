@@ -2,6 +2,8 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader/dist/index");
 const FriendlyErrorsWebpackPlugin = require("friendly-errors-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const chalk = require("chalk");
 
 function pathResolve(filePath) {
   return path.resolve(__dirname, filePath);
@@ -51,19 +53,79 @@ module.exports = {
         ],
       },
       {
+        test: /\.(gif|png|jpe?g)$/i,
+        type: "asset",
+        parser: {
+          dataUrlCondition: {
+            maxSize: 8 * 1024,
+          },
+        },
+        generator: {
+          filename: "assets/[hash:8].[name][ext]",
+        },
+      },
+      {
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/, //媒体文件
+        type: "asset/resource",
+        generator: {
+          filename: "assets/[name][ext]",
+        },
+      },
+      {
+        test: /\.css$/,
+        use: [MiniCssExtractPlugin.loader, "css-loader"],
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              postcssOptions: {
+                plugins: [["autoprefixer"]],
+              },
+            },
+          },
+          "sass-loader",
+        ],
+      },
+      {
         test: /\.vue$/,
         use: ["vue-loader"],
       },
     ],
   },
   plugins: [
-    new FriendlyErrorsWebpackPlugin(),
+    // new FriendlyErrorsWebpackPlugin({
+    //   compilationSuccessInfo: {
+    //     messages: [
+    //       "App funning at:",
+    //       `- Local:   ${chalk.blueBright("http://localhost:9000")}`,
+    //       `- NetWrok: ${chalk.blueBright("http://localhost:9000")}`,
+    //     ],
+    //   },
+    // }),
+    new FriendlyErrorsWebpackPlugin({
+      compilationSuccessInfo: {
+        messages: [
+          `You application is running here ${chalk.yellow(
+            "http://localhost:9000"
+          )}`,
+        ],
+      },
+    }),
     new HtmlWebpackPlugin({
       template: pathResolve("../index.html"),
       filename: "index.html",
       title: "Create Vue Webpack",
     }),
     new VueLoaderPlugin(),
+    new MiniCssExtractPlugin({
+      filename: "[name].[hash].css",
+      chunkFilename: "[id].css",
+    }),
   ],
-  stats: "errors-only"
+  stats: "errors-only",
 };
